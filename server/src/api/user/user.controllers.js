@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const logger = require("../../../logger");
 const UserResponse = require("../../../responses/userResponse");
+const UserProfile = require("../../../models/userProfileModel");
 
 // Register a new user
 
@@ -122,3 +123,42 @@ exports.userProfile = async (req, res) => {
     });
   }
 };
+
+exports.editProfileUser = async (req, res) => {
+  try{
+    const userId = req.user._id;
+    const { name, email, password, gender, address, farmDetails } = req.body;
+
+    // Find user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(200).json({ status: false, message: "User not found" });
+    }
+
+    // Update user fields
+    user.name = name || user.name;
+    user.email = email || user.email;
+
+    if (password) {
+      user.password = bcrypt.hashSync(password, 10);
+    }
+
+    await user.save();
+
+    const userProfile = await UserProfile.findById(userId);
+    // Update user profile fields
+    userProfile.gender = gender || userProfile.gender;
+    userProfile.address = address || userProfile.address;
+    userProfile.farmDetails = farmDetails || userProfile.farmDetails;
+
+    await userProfile.save();
+
+    logger.info("User profile updated successfully", { userId });
+    res.status(200).json({ status: true, message: "User profile updated successfully", data: new UserResponse(user) });
+  }
+  catch(err){
+    logger.info("*** Error in editProfileUser controller***", err);
+    res.status(500).json({status:false, message: "Internal Server Error" });
+  }
+};
+

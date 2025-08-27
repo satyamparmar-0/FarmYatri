@@ -21,6 +21,11 @@ const userProfileSchema = new mongoose.Schema({
     },
   },
 
+  gender:{
+    type: Number,
+    enum: [0, 1, 2], // 0 for male, 1 for female, 2 for other
+    required: false
+  },
   // Farmer-specific details
   farmDetails: {
     farmName: { type: String },
