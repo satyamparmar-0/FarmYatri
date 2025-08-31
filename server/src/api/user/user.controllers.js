@@ -13,7 +13,7 @@ module.exports.registerUser = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-       return res.status(400).json({ message: errors.array()[0].msg });
+      return res.status(400).json({ message: errors.array()[0].msg });
     }
 
     const { name, email, password, role } = req.body;
@@ -43,6 +43,15 @@ module.exports.registerUser = async (req, res) => {
       role: role || userRole.USER, // Default to USER if no role is provided,
     });
 
+    userProfileSave = new UserProfile({
+      user_id: user._id,
+      gender: null,
+      address: {},
+      farmDetails: {},
+      buyerPreferences: {}
+    });
+
+    await userProfileSave.save();
     await user.save();
 
     // Generate JWT token
@@ -65,7 +74,7 @@ exports.loginUser = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-       return res.status(400).json({ message: errors.array()[0].msg });
+      return res.status(400).json({ message: errors.array()[0].msg });
     }
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -104,17 +113,24 @@ exports.userProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId);
+    const userProfile = await UserProfile.findOne({ user_id: userId });
     if (!user) {
       return res.status(200).json({
         status: false,
         message: "User not Found",
       });
     }
+    const fullProfile = {
+      ...user.toObject(),
+      ...(userProfile ? userProfile.toObject() : {}),
+    };
     logger.info("---***userProfile Successfull***---");
     res.status(200).json({
       status: true,
-      data: new UserResponse(user),
+      data: new UserResponse(fullProfile),
     });
+    // console.log(userProfile);
+    console.log(fullProfile);
   } catch (err) {
     logger.error("---***Error while userProfile Controller---***", err);
     res.status(500).json({
@@ -127,7 +143,7 @@ exports.userProfile = async (req, res) => {
 exports.editProfileUser = async (req, res) => {
   try{
     const userId = req.user._id;
-    const { name, email, password, gender, address, farmDetails } = req.body;
+    const { name, email, password, gender, address, farmDetails, phone } = req.body;
 
     // Find user by ID
     const user = await User.findById(userId);
@@ -145,12 +161,13 @@ exports.editProfileUser = async (req, res) => {
 
     await user.save();
 
-    const userProfile = await UserProfile.findById(userId);
+    const userProfile = await UserProfile.findOne({ user_id: userId });
+    // console.log(userProfile);
     // Update user profile fields
     userProfile.gender = gender || userProfile.gender;
     userProfile.address = address || userProfile.address;
     userProfile.farmDetails = farmDetails || userProfile.farmDetails;
-
+    userProfile.phone = phone || userProfile.phone;
     await userProfile.save();
 
     logger.info("User profile updated successfully", { userId });
@@ -161,4 +178,3 @@ exports.editProfileUser = async (req, res) => {
     res.status(500).json({status:false, message: "Internal Server Error" });
   }
 };
-

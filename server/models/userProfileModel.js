@@ -8,7 +8,7 @@ const userProfileSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
+    required: false,
     match: [/^[0-9]{10}$/, "Phone must be a valid 10-digit number"],
   },
   address: {
