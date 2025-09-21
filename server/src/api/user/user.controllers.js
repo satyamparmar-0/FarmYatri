@@ -130,7 +130,8 @@ exports.userProfile = async (req, res) => {
       data: new UserResponse(fullProfile),
     });
     // console.log(userProfile);
-    console.log(fullProfile);
+    // const data = new UserResponse(fullProfile);
+    // console.log(data);
   } catch (err) {
     logger.error("---***Error while userProfile Controller---***", err);
     res.status(500).json({
@@ -164,12 +165,25 @@ exports.editProfileUser = async (req, res) => {
     const userProfile = await UserProfile.findOne({ user_id: userId });
     // console.log(userProfile);
     // Update user profile fields
+    if(!userProfile){
+      const newUserProfile = new UserProfile({
+        user_id: userId,
+        gender,
+        address,
+        farmDetails,
+        phone
+      });
+      await newUserProfile.save();
+      logger.info("User profile created successfully", { userId });
+      return res.status(200).json({ status: true, message: "User profile created successfully", data: new UserResponse(user) });
+    }
+    
     userProfile.gender = gender || userProfile.gender;
     userProfile.address = address || userProfile.address;
     userProfile.farmDetails = farmDetails || userProfile.farmDetails;
     userProfile.phone = phone || userProfile.phone;
     await userProfile.save();
-
+    // console.log(userProfile);
     logger.info("User profile updated successfully", { userId });
     res.status(200).json({ status: true, message: "User profile updated successfully", data: new UserResponse(user) });
   }

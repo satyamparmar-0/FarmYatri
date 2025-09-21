@@ -9,7 +9,7 @@ class UserResponse {
     // UserProfile fields
     this.phone = user.phone || null;
     this.address = user.address || {};
-    this.gender = user.gender || null;
+    this.gender = user.gender;
     this.farmDetails = user.farmDetails || null;
     this.buyerPreferences = user.buyerPreferences || null;
 
